@@ -89,19 +89,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let status = response.status();
     let body: serde_json::Value = response.json().await?;
 
+    let job_id = body
+        .get("job_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("<unknown>");
+
     if !status.is_success() {
         let error_message = body
             .get("error")
             .and_then(|v| v.as_str())
             .unwrap_or("Request failed");
-        eprintln!("Error: {} (status {})", error_message, status);
+        eprintln!("Job {} failed (status {})", job_id, status);
+        eprintln!("Error: {}", error_message);
         std::process::exit(1);
     }
 
-    let job_id = body
-        .get("job_id")
-        .and_then(|v| v.as_str())
-        .unwrap_or("<unknown>");
     let result_status = body.get("status").and_then(|v| v.as_str()).unwrap_or("ok");
 
     if cli.verbose {
