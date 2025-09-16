@@ -13,7 +13,7 @@ use tracing::{error, info, warn};
 
 use crate::config::ServerConfig;
 use crate::error::{AppError, AppResult};
-use crate::models::{Placement, SinkConnection};
+use crate::models::{Placement, SinkConnection, SourceInfo};
 
 const SCHEMA_VERSION: &str = "1.0";
 
@@ -59,6 +59,7 @@ pub enum RelayMessage {
 pub struct InsertTextPayload {
     pub text: String,
     pub placement: Option<Placement>,
+    pub source: SourceInfo,
     pub metadata: serde_json::Value,
 }
 
@@ -118,6 +119,7 @@ impl SinkManager {
         job_id: String,
         text: String,
         placement: Option<Placement>,
+        source: SourceInfo,
         metadata: serde_json::Value,
     ) -> AppResult<AckResponse> {
         let sink_guard = self.active_sink.read().await;
@@ -139,6 +141,7 @@ impl SinkManager {
             payload: InsertTextPayload {
                 text,
                 placement,
+                source,
                 metadata,
             },
         };
@@ -422,6 +425,7 @@ impl ActiveSink {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::SourceInfo;
 
     #[test]
     fn test_sink_message_serialization() {
@@ -451,6 +455,11 @@ mod tests {
             payload: InsertTextPayload {
                 text: "test content".to_string(),
                 placement: Some(Placement::BOTTOM),
+                source: SourceInfo {
+                    client: "cli".to_string(),
+                    label: Some("CLI".to_string()),
+                    path: Some("/tmp/file".to_string()),
+                },
                 metadata: serde_json::json!({"key": "value"}),
             },
         };
@@ -462,6 +471,7 @@ mod tests {
             RelayMessage::InsertText { id, payload, .. } => {
                 assert_eq!(id, "test-job");
                 assert_eq!(payload.placement, Some(Placement::BOTTOM));
+                assert_eq!(payload.source.client, "cli");
                 assert_eq!(payload.metadata, serde_json::json!({"key": "value"}));
             }
             _ => panic!("Wrong message type"),
