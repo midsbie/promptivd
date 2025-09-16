@@ -1,0 +1,81 @@
+#+TITLE: promptivd
+#+AUTHOR: Miguel Guedes <miguel@softgeist.com>
+#+DATE: 14/09/2025
+#+OPTIONS: toc:2 num:nil ^:nil
+
+* Overview
+
+A high-performance Rust daemon that relays append-text jobs from local clients to a browser extension via WebSocket, enabling seamless text injection into LLM web interfaces (ChatGPT, Claude, Gemini).
+
+** Features
+- Built with Tokio async runtime and axum web framework.
+- Immediate dispatch with sink ACK propagation and graceful error handling.
+- Clean modular architecture following SRP.
+- Structured logging, health checks, metrics, and WebSocket heartbeat timeouts.
+- Includes a sample CLI client (promptivc) and sink (promptivs) illustrating end-to-end relay and acknowledgment flow.
+
+* Architecture
+#+BEGIN_SRC
+[Client] -- HTTP --> [Relay Handler] == WS ==> [Extension Sink] --> [Provider Adapter] --> Sink action
+#+END_SRC
+
+* API Endpoints
+
+** HTTP API
+
+*** /v1/append
+Submit an append job.
+
+Accepts a JSON payload describing the text snippet and its source context. Validates input and relays to an active sink. Returns the sink’s ACK on success, or an error if validation fails or no sink is available.
+
+**** Request Payload
+Body is a JSON object matching the structures below.
+
+=Content-Type: application/json=
+
+#+BEGIN_SRC json
+{
+  "schema_version": "1.0",
+  "source": {
+    "client": "string (non-empty)",
+    "label": "string | null",
+    "path": "string | null"
+  },
+  "mode": "append",
+  "snippet": "string (non-empty after trim)",
+  "cursor_hint": "string | null",
+  "max_chars": 123,
+  "metadata": {
+    "...": "..."
+  }
+}
+#+END_SRC
+
+*** GET /v1/health
+Lightweight liveness probe. Returns a JSON object with daemon status, current timestamp, and version string.
+
+** WebSocket
+
+*** GET /v1/sink/ws
+WebSocket endpoint for browser extension.
+
+Upgrades to a persistent WebSocket connection used by the sink. The server relays validated append jobs to the connected sink and expects ACKs/heartbeats to maintain session health.
+
+* Sample CLI Client (promptivc)
+A minimal HTTP client used to submit append jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =/v1/append=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
+
+Run:
+#+BEGIN_SRC shell
+cargo run --bin promptivc -- --help
+#+END_SRC
+
+* Sample Sink Client (promptivs)
+A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a browser extension or external service maintains a live connection on =/v1/sink/ws=, processes incoming append requests, and returns ACKs. Provides a working example of sink behavior, including job handling and session lifecycle.
+
+Run:
+#+BEGIN_SRC shell
+cargo run --bin promptivs -- --help
+#+END_SRC
+
+* License
+Distributed under the MIT License. See LICENSE for more information.
