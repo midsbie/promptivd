@@ -18,7 +18,7 @@ use crate::models::{Placement, SinkConnection, SourceInfo, TargetSpec};
 const SCHEMA_VERSION: &str = "1.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum SinkMessage {
     Register {
         schema_version: String,
@@ -38,7 +38,7 @@ pub enum SinkMessage {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum RelayMessage {
     InsertText {
         schema_version: String,
@@ -65,7 +65,7 @@ pub struct InsertTextPayload {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum AckStatus {
     Ok,
     Retry,
@@ -460,7 +460,7 @@ mod tests {
             id: "test-job".to_string(),
             payload: InsertTextPayload {
                 text: "test content".to_string(),
-                placement: Some(Placement::BOTTOM),
+                placement: Some(Placement::Bottom),
                 source: SourceInfo {
                     client: "cli".to_string(),
                     label: Some("CLI".to_string()),
@@ -480,7 +480,7 @@ mod tests {
         match deserialized {
             RelayMessage::InsertText { id, payload, .. } => {
                 assert_eq!(id, "test-job");
-                assert_eq!(payload.placement, Some(Placement::BOTTOM));
+                assert_eq!(payload.placement, Some(Placement::Bottom));
                 assert_eq!(payload.source.client, "cli");
                 assert_eq!(
                     payload.target.as_ref().and_then(|t| t.provider.clone()),

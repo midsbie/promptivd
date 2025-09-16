@@ -127,7 +127,7 @@ async fn connect_and_run(cli: Cli) -> anyhow::Result<()> {
                         source = ?payload.source,
                         target = ?payload.target,
                         metadata = ?payload.metadata,
-                        "Received INSERT_TEXT"
+                        "Received insert_text"
                     );
 
                     if cli.ack_delay_ms > 0 {

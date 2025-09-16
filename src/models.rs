@@ -20,11 +20,11 @@ pub struct InsertTextRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Placement {
-    TOP,
-    BOTTOM,
-    CURSOR,
+    Top,
+    Bottom,
+    Cursor,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -34,7 +34,7 @@ pub struct TargetSpec {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "snake_case")]
 pub enum SessionDirective {
     ReuseOrCreate,
     ReuseOnly,

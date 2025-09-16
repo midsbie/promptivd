@@ -70,11 +70,11 @@ WebSocket endpoint for browser extension.
 Upgrades to a persistent WebSocket connection used by the sink. The server relays validated insert-text jobs to the connected sink and expects ACKs/heartbeats to maintain session health.
 
 **** Registration handshake
-Immediately after connecting, the sink must send a REGISTER frame:
+Immediately after connecting, the sink must send a `register` frame:
 
 #+BEGIN_SRC json
 {
-  "type": "REGISTER",
+  "type": "register",
   "schema_version": "1.0",
   "version": "sink-version",
   "capabilities": ["insert"],
@@ -85,27 +85,27 @@ Immediately after connecting, the sink must send a REGISTER frame:
 - *capabilities*: feature flags; today `"insert"` indicates support for insert-text jobs. Additional capabilities may be introduced later.
 - *providers*: provider identifiers that the sink understands (e.g., browser adapters). Empty list is acceptable for sinks that do not integrate with provider-specific flows.
 
-Upon successful registration the daemon responds with a POLICY frame describing limits. Clients can surface the advertised providers to users when constructing `target` directives.
+Upon successful registration the daemon responds with a `policy` frame describing limits. Clients can surface the advertised providers to users when constructing `target` directives.
 
 **** Insert-text jobs
-Validated jobs are delivered as INSERT_TEXT messages:
+Validated jobs are delivered as `insert_text` messages:
 
 #+BEGIN_SRC json
 {
-  "type": "INSERT_TEXT",
+  "type": "insert_text",
   "schema_version": "1.0",
   "id": "job-uuid",
   "payload": {
     "text": "snippet",
-    "placement": {"type": "CURSOR"} | null,
+    "placement": {"type": "cursor"} | null,
     "source": {"client": "cli", "label": "CLI", "path": "/tmp/file"},
-    "target": {"provider": "chatgpt", "session": "START_FRESH"} | null,
+    "target": {"provider": "chatgpt", "session_directive": "start_fresh"} | null,
     "metadata": {"timestamp": "...", "extra": "..."}
   }
 }
 #+END_SRC
 
-The sink must process the payload, perform the insertion, and reply with an ACK frame (`status` = `ok`, `retry`, or `failed`).
+The sink must process the payload, perform the insertion, and reply with an `ack` frame (`status` = `ok`, `retry`, or `failed`).
 
 * Sample CLI Client (promptivc)
 A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =/v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
