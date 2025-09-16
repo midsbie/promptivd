@@ -5,7 +5,7 @@
 
 * Overview
 
-A high-performance Rust daemon that relays append-text jobs from local clients to a browser extension via WebSocket, enabling seamless text injection into LLM web interfaces (ChatGPT, Claude, Gemini).
+A high-performance Rust daemon that relays insert-text jobs from local clients to a browser extension via WebSocket, enabling seamless text injection into LLM web interfaces (ChatGPT, Claude, Gemini).
 
 ** Features
 - Built with Tokio async runtime and axum web framework.
@@ -24,9 +24,9 @@ A high-performance Rust daemon that relays append-text jobs from local clients t
 ** HTTP API
 
 *** /v1/append
-Submit an append job.
+Submit an insert-text job.
 
-Accepts a JSON payload describing the text snippet and its source context. Validates input and relays to an active sink. Returns the sink’s ACK on success, or an error if validation fails or no sink is available.
+Accepts a JSON payload describing the text snippet, origin metadata, optional placement hints, and an optional target specification. Validates input and relays to an active sink. Returns the sink’s ACK on success, or an error if validation fails or no sink is available.
 
 **** Request Payload
 Body is a JSON object matching the structures below.
@@ -41,15 +41,23 @@ Body is a JSON object matching the structures below.
     "label": "string | null",
     "path": "string | null"
   },
-  "mode": "append",
-  "snippet": "string (non-empty after trim)",
-  "cursor_hint": "string | null",
-  "max_chars": 123,
+  "text": "string (non-empty after trim)",
+  "placement": {
+    "type": "TOP" | "BOTTOM" | "CURSOR"
+  } | null,
+  "target": {
+    "provider": "string | null",
+    "session": "REUSE_OR_CREATE" | "REUSE_ONLY" | "START_FRESH" | null
+  } | null,
   "metadata": {
     "...": "..."
   }
 }
 #+END_SRC
+
+- *placement*: optional hint for where the snippet should be inserted if the sink supports multiple insertion modes.
+- *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session* guides how the sink should reuse or create sessions (`REUSE_OR_CREATE` by default, `REUSE_ONLY` to fail if reuse is impossible, `START_FRESH` to force a new session).
+- *metadata*: arbitrary JSON provided by the client (e.g., timestamps, originating editor context).
 
 *** GET /v1/health
 Lightweight liveness probe. Returns a JSON object with daemon status, current timestamp, and version string.
@@ -59,7 +67,46 @@ Lightweight liveness probe. Returns a JSON object with daemon status, current ti
 *** GET /v1/sink/ws
 WebSocket endpoint for browser extension.
 
-Upgrades to a persistent WebSocket connection used by the sink. The server relays validated append jobs to the connected sink and expects ACKs/heartbeats to maintain session health.
+Upgrades to a persistent WebSocket connection used by the sink. The server relays validated insert-text jobs to the connected sink and expects ACKs/heartbeats to maintain session health.
+
+**** Registration handshake
+Immediately after connecting, the sink must send a REGISTER frame:
+
+#+BEGIN_SRC json
+{
+  "type": "REGISTER",
+  "schema_version": "1.0",
+  "version": "extension-version",
+  "profile_id": "optional profile identifier",
+  "capabilities": ["append"],
+  "providers": ["chatgpt", "claude"]
+}
+#+END_SRC
+
+- *capabilities*: feature flags; today `"append"` indicates support for insert-text jobs. Additional capabilities may be introduced later.
+- *providers*: provider identifiers that the sink understands (e.g., browser adapters). Empty list is acceptable for sinks that do not integrate with provider-specific flows.
+
+Upon successful registration the daemon responds with a POLICY frame describing limits. Clients can surface the advertised providers to users when constructing `target` directives.
+
+**** Insert-text jobs
+Validated jobs are delivered as INSERT_TEXT messages:
+
+#+BEGIN_SRC json
+{
+  "type": "INSERT_TEXT",
+  "schema_version": "1.0",
+  "id": "job-uuid",
+  "payload": {
+    "text": "snippet",
+    "placement": {"type": "CURSOR"} | null,
+    "source": {"client": "cli", "label": "CLI", "path": "/tmp/file"},
+    "target": {"provider": "chatgpt", "session": "START_FRESH"} | null,
+    "metadata": {"timestamp": "...", "extra": "..."}
+  }
+}
+#+END_SRC
+
+The sink must process the payload, perform the insertion, and reply with an ACK frame (`status` = `ok`, `retry`, or `failed`).
 
 * Sample CLI Client (promptivc)
 A minimal HTTP client used to submit append jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =/v1/append=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
