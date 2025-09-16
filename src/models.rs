@@ -13,7 +13,7 @@ pub struct SourceInfo {
 pub struct InsertTextRequest {
     pub schema_version: String,
     pub source: SourceInfo,
-    pub snippet: String,
+    pub text: String,
     pub placement: Option<Placement>,
     pub metadata: serde_json::Value,
 }
@@ -40,7 +40,7 @@ impl InsertTextRequest {
             });
         }
 
-        if self.snippet.trim().is_empty() {
+        if self.text.trim().is_empty() {
             return Err(crate::error::ValidationError::EmptySnippet);
         }
 
@@ -93,14 +93,14 @@ mod tests {
                 label: None,
                 path: None,
             },
-            snippet: "test content".to_string(),
+            text: "test content".to_string(),
             placement: None,
             metadata: serde_json::json!({}),
         };
 
         assert!(request.validate().is_ok());
 
-        request.snippet = "".to_string();
+        request.text = "".to_string();
         assert!(request.validate().is_err());
     }
 }

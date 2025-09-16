@@ -57,7 +57,7 @@ pub async fn append_job(
         .sink_manager
         .dispatch_job(
             job_id.clone(),
-            payload.snippet.clone(),
+            payload.text.clone(),
             payload.placement.clone(),
             payload.metadata.clone(),
         )
@@ -144,7 +144,7 @@ mod tests {
                 label: Some("Test Client".to_string()),
                 path: Some("/test/file.txt".to_string()),
             },
-            snippet: "Test content".to_string(),
+            text: "Test content".to_string(),
             placement: None,
             metadata: serde_json::json!({"test": "data"}),
         }

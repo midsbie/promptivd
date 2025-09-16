@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             label: Some(cli.label),
             path: cli.path.as_ref().map(|p| p.to_string_lossy().to_string()),
         },
-        snippet: add_snippet_template(&content, cli.path.as_ref()),
+        text: add_snippet_template(&content, cli.path.as_ref()),
         placement: None,
         metadata: json!({
             "cli_version": env!("CARGO_PKG_VERSION"),
