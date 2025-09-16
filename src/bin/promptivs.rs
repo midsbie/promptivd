@@ -20,10 +20,6 @@ struct Cli {
     #[arg(long, default_value = "ws://127.0.0.1:8787/v1/sink/ws")]
     server: String,
 
-    /// Optional profile identifier to send on register
-    #[arg(long)]
-    profile_id: Option<String>,
-
     /// Ack behaviour for incoming jobs
     #[arg(long, value_enum, default_value_t = AckMode::Ok)]
     ack_mode: AckMode,
@@ -91,7 +87,6 @@ async fn connect_and_run(cli: Cli) -> anyhow::Result<()> {
     let register = SinkMessage::Register {
         schema_version: SCHEMA_VERSION.to_string(),
         version: CLIENT_VERSION.to_string(),
-        profile_id: cli.profile_id.clone(),
         capabilities: cli.capabilities.clone(),
     };
 

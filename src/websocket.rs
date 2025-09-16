@@ -23,7 +23,6 @@ pub enum SinkMessage {
     Register {
         schema_version: String,
         version: String,
-        profile_id: Option<String>,
         capabilities: Vec<String>,
     },
     Ack {
@@ -332,7 +331,6 @@ impl SinkManager {
             SinkMessage::Register {
                 schema_version,
                 version,
-                profile_id,
                 capabilities,
             } => {
                 if schema_version != SCHEMA_VERSION {
@@ -341,7 +339,7 @@ impl SinkManager {
                     });
                 }
 
-                let connection = SinkConnection::new(profile_id, capabilities, version);
+                let connection = SinkConnection::new(capabilities, version);
 
                 let sink = ActiveSink {
                     connection,
@@ -432,7 +430,6 @@ mod tests {
         let register_msg = SinkMessage::Register {
             schema_version: "1.0".to_string(),
             version: "1.0.0".to_string(),
-            profile_id: Some("test-profile".to_string()),
             capabilities: vec!["append".to_string()],
         };
 

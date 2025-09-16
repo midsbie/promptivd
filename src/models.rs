@@ -52,17 +52,15 @@ impl InsertTextRequest {
 pub struct SinkConnection {
     pub id: Uuid,
     pub registered_at: DateTime<Utc>,
-    pub profile_id: Option<String>,
     pub capabilities: Vec<String>,
     pub version: String,
 }
 
 impl SinkConnection {
-    pub fn new(profile_id: Option<String>, capabilities: Vec<String>, version: String) -> Self {
+    pub fn new(capabilities: Vec<String>, version: String) -> Self {
         Self {
             id: Uuid::new_v4(),
             registered_at: Utc::now(),
-            profile_id,
             capabilities,
             version,
         }
