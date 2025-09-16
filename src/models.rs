@@ -10,17 +10,23 @@ pub struct SourceInfo {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AppendRequest {
+pub struct InsertTextRequest {
     pub schema_version: String,
     pub source: SourceInfo,
-    pub mode: String,
     pub snippet: String,
-    pub cursor_hint: Option<String>,
-    pub max_chars: Option<usize>,
+    pub placement: Option<Placement>,
     pub metadata: serde_json::Value,
 }
 
-impl AppendRequest {
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Placement {
+    TOP,
+    BOTTOM,
+    CURSOR,
+}
+
+impl InsertTextRequest {
     pub fn validate(&self) -> crate::error::ValidationResult<()> {
         if self.schema_version != "1.0" {
             return Err(crate::error::ValidationError::InvalidSchemaVersion {
@@ -36,12 +42,6 @@ impl AppendRequest {
 
         if self.snippet.trim().is_empty() {
             return Err(crate::error::ValidationError::EmptySnippet);
-        }
-
-        if self.mode != "append" {
-            return Err(crate::error::ValidationError::MissingField {
-                field: "mode".to_string(),
-            });
         }
 
         Ok(())
@@ -85,18 +85,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_append_request_validation() {
-        let mut request = AppendRequest {
+    fn test_insert_text_request_validation() {
+        let mut request = InsertTextRequest {
             schema_version: "1.0".to_string(),
             source: SourceInfo {
                 client: "test".to_string(),
                 label: None,
                 path: None,
             },
-            mode: "append".to_string(),
             snippet: "test content".to_string(),
-            cursor_hint: None,
-            max_chars: None,
+            placement: None,
             metadata: serde_json::json!({}),
         };
 

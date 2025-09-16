@@ -5,7 +5,7 @@ use clap::Parser;
 use reqwest::Client;
 use serde_json::json;
 
-use promptivd::models::{AppendRequest, SourceInfo};
+use promptivd::models::{InsertTextRequest, SourceInfo};
 
 #[derive(Parser)]
 #[command(name = "promptivc")]
@@ -59,17 +59,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Create the request
-    let request = AppendRequest {
+    let request = InsertTextRequest {
         schema_version: "1.0".to_string(),
         source: SourceInfo {
             client: "cli".to_string(),
             label: Some(cli.label),
             path: cli.path.as_ref().map(|p| p.to_string_lossy().to_string()),
         },
-        mode: "append".to_string(),
         snippet: add_snippet_template(&content, cli.path.as_ref()),
-        cursor_hint: None,
-        max_chars: Some(32768),
+        placement: None,
         metadata: json!({
             "cli_version": env!("CARGO_PKG_VERSION"),
             "timestamp": chrono::Utc::now().to_rfc3339()

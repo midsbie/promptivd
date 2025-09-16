@@ -13,7 +13,7 @@ use tracing::{error, info, warn};
 
 use crate::config::ServerConfig;
 use crate::error::{AppError, AppResult};
-use crate::models::SinkConnection;
+use crate::models::{Placement, SinkConnection};
 
 const SCHEMA_VERSION: &str = "1.0";
 
@@ -40,10 +40,10 @@ pub enum SinkMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RelayMessage {
-    JobAppend {
+    InsertText {
         schema_version: String,
         id: String,
-        payload: JobPayload,
+        payload: InsertTextPayload,
     },
     Ping {
         schema_version: String,
@@ -56,9 +56,9 @@ pub enum RelayMessage {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct JobPayload {
+pub struct InsertTextPayload {
     pub text: String,
-    pub cursor_hint: Option<String>,
+    pub placement: Option<Placement>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -116,7 +116,7 @@ impl SinkManager {
         &self,
         job_id: String,
         text: String,
-        cursor_hint: Option<String>,
+        placement: Option<Placement>,
     ) -> AppResult<AckResponse> {
         let sink_guard = self.active_sink.read().await;
         let sink = match sink_guard.as_ref() {
@@ -131,10 +131,10 @@ impl SinkManager {
             waiters.insert(job_id.clone(), response_tx);
         }
 
-        let job_msg = RelayMessage::JobAppend {
+        let job_msg = RelayMessage::InsertText {
             schema_version: SCHEMA_VERSION.to_string(),
             id: job_id.clone(),
-            payload: JobPayload { text, cursor_hint },
+            payload: InsertTextPayload { text, placement },
         };
 
         if sink.message_sender.send(job_msg).is_err() {
@@ -439,12 +439,12 @@ mod tests {
 
     #[test]
     fn test_relay_message_serialization() {
-        let job_msg = RelayMessage::JobAppend {
+        let job_msg = RelayMessage::InsertText {
             schema_version: "1.0".to_string(),
             id: "test-job".to_string(),
-            payload: JobPayload {
+            payload: InsertTextPayload {
                 text: "test content".to_string(),
-                cursor_hint: None,
+                placement: Some(Placement::BOTTOM),
             },
         };
 
@@ -452,8 +452,9 @@ mod tests {
         let deserialized: RelayMessage = serde_json::from_str(&json).unwrap();
 
         match deserialized {
-            RelayMessage::JobAppend { id, .. } => {
+            RelayMessage::InsertText { id, payload, .. } => {
                 assert_eq!(id, "test-job");
+                assert_eq!(payload.placement, Some(Placement::BOTTOM));
             }
             _ => panic!("Wrong message type"),
         }

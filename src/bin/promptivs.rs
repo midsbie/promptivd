@@ -123,12 +123,12 @@ async fn connect_and_run(cli: Cli) -> anyhow::Result<()> {
                         supersede_on_register, max_job_bytes
                     );
                 }
-                Ok(RelayMessage::JobAppend { id, payload, .. }) => {
+                Ok(RelayMessage::InsertText { id, payload, .. }) => {
                     info!(
                         job_id = id,
                         text = %payload.text,
-                        cursor_hint = ?payload.cursor_hint,
-                        "Received JOB_APPEND"
+                        placement = ?payload.placement,
+                        "Received INSERT_TEXT"
                     );
 
                     if cli.ack_delay_ms > 0 {

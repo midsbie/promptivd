@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::config::ServerConfig;
 use crate::error::AppError;
-use crate::models::{AppendRequest, HealthResponse};
+use crate::models::{HealthResponse, InsertTextRequest};
 use crate::websocket::{AckResponse, AckStatus, SinkManager};
 
 #[derive(Clone)]
@@ -30,7 +30,7 @@ pub async fn health() -> Json<HealthResponse> {
 
 pub async fn append_job(
     State(state): State<AppState>,
-    Json(payload): Json<AppendRequest>,
+    Json(payload): Json<InsertTextRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     // Validate payload size
     let payload_size = serde_json::to_string(&payload)?.len();
@@ -58,7 +58,7 @@ pub async fn append_job(
         .dispatch_job(
             job_id.clone(),
             payload.snippet.clone(),
-            payload.cursor_hint.clone(),
+            payload.placement.clone(),
         )
         .await?;
 
@@ -135,18 +135,16 @@ mod tests {
         }
     }
 
-    fn create_test_request() -> AppendRequest {
-        AppendRequest {
+    fn create_test_request() -> InsertTextRequest {
+        InsertTextRequest {
             schema_version: "1.0".to_string(),
             source: SourceInfo {
                 client: "test".to_string(),
                 label: Some("Test Client".to_string()),
                 path: Some("/test/file.txt".to_string()),
             },
-            mode: "append".to_string(),
             snippet: "Test content".to_string(),
-            cursor_hint: None,
-            max_chars: Some(1000),
+            placement: None,
             metadata: serde_json::json!({"test": "data"}),
         }
     }
