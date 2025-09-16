@@ -106,9 +106,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if cli.verbose {
         println!("Job {} completed with status {}", job_id, result_status);
-        if let Some(tab_url) = body.get("tab_url").and_then(|v| v.as_str()) {
-            println!("Tab: {}", tab_url);
-        }
         if let Some(chars) = body.get("appended_chars").and_then(|v| v.as_u64()) {
             println!("Appended characters: {}", chars);
         }

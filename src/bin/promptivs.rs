@@ -24,10 +24,6 @@ struct Cli {
     #[arg(long, value_enum, default_value_t = AckMode::Ok)]
     ack_mode: AckMode,
 
-    /// Optional tab url to include in ACK responses
-    #[arg(long)]
-    tab_url: Option<String>,
-
     /// Artificial processing delay before sending ACK (milliseconds)
     #[arg(long, default_value_t = 0u64)]
     ack_delay_ms: u64,
