@@ -15,6 +15,7 @@ pub struct InsertTextRequest {
     pub source: SourceInfo,
     pub text: String,
     pub placement: Option<Placement>,
+    pub target: Option<TargetSpec>,
     pub metadata: serde_json::Value,
 }
 
@@ -24,6 +25,20 @@ pub enum Placement {
     TOP,
     BOTTOM,
     CURSOR,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TargetSpec {
+    pub provider: Option<String>,
+    pub session_directive: Option<SessionDirective>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SessionDirective {
+    ReuseOrCreate,
+    ReuseOnly,
+    StartFresh,
 }
 
 impl InsertTextRequest {
@@ -44,6 +59,16 @@ impl InsertTextRequest {
             return Err(crate::error::ValidationError::EmptySnippet);
         }
 
+        if let Some(target) = &self.target {
+            if let Some(provider) = &target.provider {
+                if provider.trim().is_empty() {
+                    return Err(crate::error::ValidationError::MissingField {
+                        field: "target.provider".to_string(),
+                    });
+                }
+            }
+        }
+
         Ok(())
     }
 }
@@ -53,15 +78,17 @@ pub struct SinkConnection {
     pub id: Uuid,
     pub registered_at: DateTime<Utc>,
     pub capabilities: Vec<String>,
+    pub providers: Vec<String>,
     pub version: String,
 }
 
 impl SinkConnection {
-    pub fn new(capabilities: Vec<String>, version: String) -> Self {
+    pub fn new(capabilities: Vec<String>, providers: Vec<String>, version: String) -> Self {
         Self {
             id: Uuid::new_v4(),
             registered_at: Utc::now(),
             capabilities,
+            providers,
             version,
         }
     }
@@ -93,6 +120,7 @@ mod tests {
             },
             text: "test content".to_string(),
             placement: None,
+            target: None,
             metadata: serde_json::json!({}),
         };
 
@@ -100,5 +128,15 @@ mod tests {
 
         request.text = "".to_string();
         assert!(request.validate().is_err());
+
+        request.text = "abc".to_string();
+        request.target = Some(TargetSpec {
+            provider: Some("".to_string()),
+            session_directive: None,
+        });
+        assert!(matches!(
+            request.validate(),
+            Err(crate::error::ValidationError::MissingField { field }) if field == "target.provider"
+        ));
     }
 }

@@ -68,6 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
         text: add_snippet_template(&content, cli.path.as_ref()),
         placement: None,
+        target: None,
         metadata: json!({
             "cli_version": env!("CARGO_PKG_VERSION"),
             "timestamp": chrono::Utc::now().to_rfc3339()

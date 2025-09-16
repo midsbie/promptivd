@@ -39,6 +39,10 @@ struct Cli {
     /// Capabilities to advertise (may be passed multiple times)
     #[arg(long = "capability", value_name = "NAME", default_values_t = vec![String::from("append")])]
     capabilities: Vec<String>,
+
+    /// Provider identifiers supported by this sink (may be passed multiple times)
+    #[arg(long = "provider", value_name = "ID", default_values_t = vec![String::from("chatgpt")])]
+    providers: Vec<String>,
 }
 
 #[derive(Debug, Copy, Clone, ValueEnum)]
@@ -88,6 +92,7 @@ async fn connect_and_run(cli: Cli) -> anyhow::Result<()> {
         schema_version: SCHEMA_VERSION.to_string(),
         version: CLIENT_VERSION.to_string(),
         capabilities: cli.capabilities.clone(),
+        providers: cli.providers.clone(),
     };
 
     ws_sender
@@ -124,6 +129,7 @@ async fn connect_and_run(cli: Cli) -> anyhow::Result<()> {
                         text = %payload.text,
                         placement = ?payload.placement,
                         source = ?payload.source,
+                        target = ?payload.target,
                         metadata = ?payload.metadata,
                         "Received INSERT_TEXT"
                     );

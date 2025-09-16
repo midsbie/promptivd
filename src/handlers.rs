@@ -60,6 +60,7 @@ pub async fn append_job(
             payload.text.clone(),
             payload.placement.clone(),
             payload.source.clone(),
+            payload.target.clone(),
             payload.metadata.clone(),
         )
         .await?;
@@ -147,6 +148,7 @@ mod tests {
             },
             text: "Test content".to_string(),
             placement: None,
+            target: None,
             metadata: serde_json::json!({"test": "data"}),
         }
     }

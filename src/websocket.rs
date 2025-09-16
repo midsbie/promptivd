@@ -13,7 +13,7 @@ use tracing::{error, info, warn};
 
 use crate::config::ServerConfig;
 use crate::error::{AppError, AppResult};
-use crate::models::{Placement, SinkConnection, SourceInfo};
+use crate::models::{Placement, SinkConnection, SourceInfo, TargetSpec};
 
 const SCHEMA_VERSION: &str = "1.0";
 
@@ -24,6 +24,7 @@ pub enum SinkMessage {
         schema_version: String,
         version: String,
         capabilities: Vec<String>,
+        providers: Vec<String>,
     },
     Ack {
         schema_version: String,
@@ -59,6 +60,7 @@ pub struct InsertTextPayload {
     pub text: String,
     pub placement: Option<Placement>,
     pub source: SourceInfo,
+    pub target: Option<TargetSpec>,
     pub metadata: serde_json::Value,
 }
 
@@ -119,6 +121,7 @@ impl SinkManager {
         text: String,
         placement: Option<Placement>,
         source: SourceInfo,
+        target: Option<TargetSpec>,
         metadata: serde_json::Value,
     ) -> AppResult<AckResponse> {
         let sink_guard = self.active_sink.read().await;
@@ -141,6 +144,7 @@ impl SinkManager {
                 text,
                 placement,
                 source,
+                target,
                 metadata,
             },
         };
@@ -332,6 +336,7 @@ impl SinkManager {
                 schema_version,
                 version,
                 capabilities,
+                providers,
             } => {
                 if schema_version != SCHEMA_VERSION {
                     return Err(AppError::SinkRegistrationFailed {
@@ -339,7 +344,7 @@ impl SinkManager {
                     });
                 }
 
-                let connection = SinkConnection::new(capabilities, version);
+                let connection = SinkConnection::new(capabilities, providers, version);
 
                 let sink = ActiveSink {
                     connection,
@@ -423,7 +428,7 @@ impl ActiveSink {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::SourceInfo;
+    use crate::models::{SessionDirective, SourceInfo, TargetSpec};
 
     #[test]
     fn test_sink_message_serialization() {
@@ -431,14 +436,18 @@ mod tests {
             schema_version: "1.0".to_string(),
             version: "1.0.0".to_string(),
             capabilities: vec!["append".to_string()],
+            providers: vec!["chatgpt".to_string(), "claude".to_string()],
         };
 
         let json = serde_json::to_string(&register_msg).unwrap();
         let deserialized: SinkMessage = serde_json::from_str(&json).unwrap();
 
         match deserialized {
-            SinkMessage::Register { version, .. } => {
+            SinkMessage::Register {
+                version, providers, ..
+            } => {
                 assert_eq!(version, "1.0.0");
+                assert_eq!(providers, vec!["chatgpt", "claude"]);
             }
             _ => panic!("Wrong message type"),
         }
@@ -457,6 +466,10 @@ mod tests {
                     label: Some("CLI".to_string()),
                     path: Some("/tmp/file".to_string()),
                 },
+                target: Some(TargetSpec {
+                    provider: Some("chatgpt".to_string()),
+                    session_directive: Some(SessionDirective::ReuseOrCreate),
+                }),
                 metadata: serde_json::json!({"key": "value"}),
             },
         };
@@ -469,6 +482,10 @@ mod tests {
                 assert_eq!(id, "test-job");
                 assert_eq!(payload.placement, Some(Placement::BOTTOM));
                 assert_eq!(payload.source.client, "cli");
+                assert_eq!(
+                    payload.target.as_ref().and_then(|t| t.provider.clone()),
+                    Some("chatgpt".to_string())
+                );
                 assert_eq!(payload.metadata, serde_json::json!({"key": "value"}));
             }
             _ => panic!("Wrong message type"),
