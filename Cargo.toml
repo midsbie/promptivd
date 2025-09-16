@@ -1,0 +1,64 @@
+[package]
+name = "promptivd"
+version = "0.1.0"
+edition = "2021"
+description = "Rust daemon that queues and relays append-text jobs to browser extension via WebSocket"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/miguelg/promptivd"
+
+[[bin]]
+name = "promptivd"
+path = "src/bin/promptivd.rs"
+
+[[bin]]
+name = "promptivc"
+path = "src/bin/promptivc.rs"
+
+[[bin]]
+name = "promptivs"
+path = "src/bin/promptivs.rs"
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Web framework
+axum = { version = "0.7", features = ["ws", "macros"] }
+futures-util = "0.3"
+hyper = "1.0"
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "timeout"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Configuration
+config = "0.14"
+serde_yaml = "0.9"
+serde_with = "3.4"
+dirs = "5.0"
+
+# CLI
+clap = { version = "4.4", features = ["derive", "env"] }
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+tokio-tungstenite = "0.21"
+
+# HTTP client for testing/health checks
+reqwest = { version = "0.11", features = ["json"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
+serial_test = "3"
