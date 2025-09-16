@@ -59,6 +59,7 @@ pub async fn append_job(
             job_id.clone(),
             payload.snippet.clone(),
             payload.placement.clone(),
+            payload.metadata.clone(),
         )
         .await?;
 

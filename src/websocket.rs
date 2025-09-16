@@ -59,6 +59,7 @@ pub enum RelayMessage {
 pub struct InsertTextPayload {
     pub text: String,
     pub placement: Option<Placement>,
+    pub metadata: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -117,6 +118,7 @@ impl SinkManager {
         job_id: String,
         text: String,
         placement: Option<Placement>,
+        metadata: serde_json::Value,
     ) -> AppResult<AckResponse> {
         let sink_guard = self.active_sink.read().await;
         let sink = match sink_guard.as_ref() {
@@ -134,7 +136,11 @@ impl SinkManager {
         let job_msg = RelayMessage::InsertText {
             schema_version: SCHEMA_VERSION.to_string(),
             id: job_id.clone(),
-            payload: InsertTextPayload { text, placement },
+            payload: InsertTextPayload {
+                text,
+                placement,
+                metadata,
+            },
         };
 
         if sink.message_sender.send(job_msg).is_err() {
@@ -445,6 +451,7 @@ mod tests {
             payload: InsertTextPayload {
                 text: "test content".to_string(),
                 placement: Some(Placement::BOTTOM),
+                metadata: serde_json::json!({"key": "value"}),
             },
         };
 
@@ -455,6 +462,7 @@ mod tests {
             RelayMessage::InsertText { id, payload, .. } => {
                 assert_eq!(id, "test-job");
                 assert_eq!(payload.placement, Some(Placement::BOTTOM));
+                assert_eq!(payload.metadata, serde_json::json!({"key": "value"}));
             }
             _ => panic!("Wrong message type"),
         }

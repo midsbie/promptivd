@@ -128,6 +128,7 @@ async fn connect_and_run(cli: Cli) -> anyhow::Result<()> {
                         job_id = id,
                         text = %payload.text,
                         placement = ?payload.placement,
+                        metadata = ?payload.metadata,
                         "Received INSERT_TEXT"
                     );
 
