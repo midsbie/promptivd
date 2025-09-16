@@ -33,7 +33,7 @@ struct Cli {
     log_level: String,
 
     /// Capabilities to advertise (may be passed multiple times)
-    #[arg(long = "capability", value_name = "NAME", default_values_t = vec![String::from("append")])]
+    #[arg(long = "capability", value_name = "NAME", default_values_t = vec![String::from("insert")])]
     capabilities: Vec<String>,
 
     /// Provider identifiers supported by this sink (may be passed multiple times)

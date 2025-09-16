@@ -2,7 +2,7 @@
 name = "promptivd"
 version = "0.1.0"
 edition = "2021"
-description = "Rust daemon that queues and relays append-text jobs to browser extension via WebSocket"
+description = "Rust daemon that queues and relays insert-text jobs to a browser extension via WebSocket"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/miguelg/promptivd"
 

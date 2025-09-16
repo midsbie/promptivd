@@ -28,7 +28,7 @@ pub async fn health() -> Json<HealthResponse> {
     })
 }
 
-pub async fn append_job(
+pub async fn insert_job(
     State(state): State<AppState>,
     Json(payload): Json<InsertTextRequest>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -160,11 +160,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_append_job_no_sink() {
+    async fn test_insert_job_no_sink() {
         let state = create_test_state();
         let request = create_test_request();
 
-        let result = append_job(State(state), Json(request)).await;
+        let result = insert_job(State(state), Json(request)).await;
 
         assert!(matches!(result, Err(AppError::NoSink)));
     }
@@ -176,7 +176,7 @@ mod tests {
 
         let request = create_test_request();
 
-        let result = append_job(State(state), Json(request)).await;
+        let result = insert_job(State(state), Json(request)).await;
 
         assert!(matches!(result, Err(AppError::PayloadTooLarge { .. })));
     }

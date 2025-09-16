@@ -435,7 +435,7 @@ mod tests {
         let register_msg = SinkMessage::Register {
             schema_version: "1.0".to_string(),
             version: "1.0.0".to_string(),
-            capabilities: vec!["append".to_string()],
+            capabilities: vec!["insert".to_string()],
             providers: vec!["chatgpt".to_string(), "claude".to_string()],
         };
 

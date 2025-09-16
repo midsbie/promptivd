@@ -23,7 +23,7 @@ A high-performance Rust daemon that relays insert-text jobs from local clients t
 
 ** HTTP API
 
-*** /v1/append
+*** /v1/insert
 Submit an insert-text job.
 
 Accepts a JSON payload describing the text snippet, origin metadata, optional placement hints, and an optional target specification. Validates input and relays to an active sink. Returns the sink’s ACK on success, or an error if validation fails or no sink is available.
@@ -76,14 +76,13 @@ Immediately after connecting, the sink must send a REGISTER frame:
 {
   "type": "REGISTER",
   "schema_version": "1.0",
-  "version": "extension-version",
-  "profile_id": "optional profile identifier",
-  "capabilities": ["append"],
+  "version": "sink-version",
+  "capabilities": ["insert"],
   "providers": ["chatgpt", "claude"]
 }
 #+END_SRC
 
-- *capabilities*: feature flags; today `"append"` indicates support for insert-text jobs. Additional capabilities may be introduced later.
+- *capabilities*: feature flags; today `"insert"` indicates support for insert-text jobs. Additional capabilities may be introduced later.
 - *providers*: provider identifiers that the sink understands (e.g., browser adapters). Empty list is acceptable for sinks that do not integrate with provider-specific flows.
 
 Upon successful registration the daemon responds with a POLICY frame describing limits. Clients can surface the advertised providers to users when constructing `target` directives.
@@ -109,7 +108,7 @@ Validated jobs are delivered as INSERT_TEXT messages:
 The sink must process the payload, perform the insertion, and reply with an ACK frame (`status` = `ok`, `retry`, or `failed`).
 
 * Sample CLI Client (promptivc)
-A minimal HTTP client used to submit append jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =/v1/append=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
+A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =/v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
 
 Run:
 #+BEGIN_SRC shell
@@ -117,7 +116,7 @@ cargo run --bin promptivc -- --help
 #+END_SRC
 
 * Sample Sink Client (promptivs)
-A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a browser extension or external service maintains a live connection on =/v1/sink/ws=, processes incoming append requests, and returns ACKs. Provides a working example of sink behavior, including job handling and session lifecycle.
+A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a browser extension or external service maintains a live connection on =/v1/sink/ws=, processes incoming /insert/ text requests, and returns ACKs. Provides a working example of sink behavior, including job handling and session lifecycle.
 
 Run:
 #+BEGIN_SRC shell

@@ -23,7 +23,7 @@ use promptivd::websocket::SinkManager;
 
 #[derive(Parser)]
 #[command(name = "promptivd")]
-#[command(about = "A Rust daemon that relays append-text jobs to a browser extension")]
+#[command(about = "A Rust daemon that relays insert-text jobs to a browser extension")]
 #[command(version)]
 struct Cli {
     /// Configuration file path
@@ -118,7 +118,7 @@ fn create_router(state: AppState, config: &AppConfig) -> Router {
     Router::new()
         // API routes
         .route("/v1/health", get(promptivd::handlers::health))
-        .route("/v1/append", post(promptivd::handlers::append_job))
+        .route("/v1/insert", post(promptivd::handlers::insert_job))
         // WebSocket route for sink connections
         .route("/v1/sink/ws", get(promptivd::handlers::websocket_handler))
         .with_state(state)

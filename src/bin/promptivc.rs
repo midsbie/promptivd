@@ -78,11 +78,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create HTTP client
     let client = Client::new();
     let request_builder = client
-        .post(format!("{}/v1/append", cli.server))
+        .post(format!("{}/v1/insert", cli.server))
         .json(&request);
 
     if cli.verbose {
-        println!("Sending request to: {}/v1/append", cli.server);
+        println!("Sending request to: {}/v1/insert", cli.server);
     }
 
     let response = request_builder.send().await?;
@@ -106,8 +106,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if cli.verbose {
         println!("Job {} completed with status {}", job_id, result_status);
-        if let Some(chars) = body.get("appended_chars").and_then(|v| v.as_u64()) {
-            println!("Appended characters: {}", chars);
+        if let Some(chars) = body.get("inserted_chars").and_then(|v| v.as_u64()) {
+            println!("Inserted characters: {}", chars);
         }
     } else {
         println!("Job {}: {}", job_id, result_status);
