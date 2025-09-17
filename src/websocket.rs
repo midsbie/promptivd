@@ -61,7 +61,8 @@ pub struct InsertTextPayload {
     pub placement: Option<Placement>,
     pub source: SourceInfo,
     pub target: Option<TargetSpec>,
-    pub metadata: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -144,7 +145,7 @@ impl SinkManager {
         placement: Option<Placement>,
         source: SourceInfo,
         target: Option<TargetSpec>,
-        metadata: serde_json::Value,
+        metadata: Option<serde_json::Value>,
     ) -> AppResult<AckResponse> {
         let sink_guard = self.active_sink.read().await;
         let sink = match sink_guard.as_ref() {
@@ -492,7 +493,7 @@ mod tests {
                     provider: Some("chatgpt".to_string()),
                     session_policy: Some(SessionPolicy::ReuseOrCreate),
                 }),
-                metadata: serde_json::json!({"key": "value"}),
+                metadata: Some(serde_json::json!({"key": "value"})),
             },
         };
 
@@ -508,7 +509,7 @@ mod tests {
                     payload.target.as_ref().and_then(|t| t.provider.clone()),
                     Some("chatgpt".to_string())
                 );
-                assert_eq!(payload.metadata, serde_json::json!({"key": "value"}));
+                assert_eq!(payload.metadata, Some(serde_json::json!({"key": "value"})));
             }
             _ => panic!("Wrong message type"),
         }

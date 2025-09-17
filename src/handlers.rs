@@ -158,7 +158,7 @@ mod tests {
             text: "Test content".to_string(),
             placement: None,
             target: None,
-            metadata: serde_json::json!({"test": "data"}),
+            metadata: Some(serde_json::json!({"test": "data"})),
         }
     }
 
@@ -205,10 +205,7 @@ mod tests {
         let providers = vec!["chatgpt".to_string(), "claude".to_string()];
         let connection = SinkConnection::new(vec![], providers.clone(), "1.2.3".to_string());
 
-        state
-            .sink_manager
-            .set_test_sink(connection)
-            .await;
+        state.sink_manager.set_test_sink(connection).await;
 
         let response = list_providers(State(state)).await.unwrap();
 

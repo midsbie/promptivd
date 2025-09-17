@@ -131,10 +131,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         text: add_snippet_template(&content, cli.path.as_ref()),
         placement: cli.placement.map(Into::into),
         target,
-        metadata: json!({
+        metadata: Some(json!({
             "cli_version": env!("CARGO_PKG_VERSION"),
             "timestamp": chrono::Utc::now().to_rfc3339()
-        }),
+        })),
     };
 
     // Create HTTP client

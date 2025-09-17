@@ -16,7 +16,8 @@ pub struct InsertTextRequest {
     pub text: String,
     pub placement: Option<Placement>,
     pub target: Option<TargetSpec>,
-    pub metadata: serde_json::Value,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -126,7 +127,7 @@ mod tests {
             text: "test content".to_string(),
             placement: None,
             target: None,
-            metadata: serde_json::json!({}),
+            metadata: Some(serde_json::json!({})),
         };
 
         assert!(request.validate().is_ok());
