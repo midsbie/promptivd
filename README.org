@@ -60,6 +60,14 @@ Body is a JSON object matching the structures below.
 - *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session_policy* guides how the sink should reuse or create sessions (`REUSE_OR_CREATE` by default, `REUSE_ONLY` to fail if reuse is impossible, `START_FRESH` to force a new session).
 - *metadata*: arbitrary JSON provided by the client (e.g., timestamps, originating editor context).
 
+**** Responses
+- =200 OK=: job delivered. Response body contains ={"job_id":"...","status":"ok"}=.
+- =502 Bad Gateway=: sink responded with =retry= or =failed=. Body includes the sink’s status and optional error text.
+- =503 Service Unavailable=: no sink is connected (or =require_sink=true= prevented queuing). Clients should retry later.
+- =400 Bad Request=: schema validation or serialization failure.
+- =413 Payload Too Large=: payload exceeds =server.max_job_bytes=.
+
+If =server.require_sink=true= (default =false=), the daemon rejects jobs immediately when no sink is connected. Otherwise jobs are attempted and fail with 503 only when dispatch is impossible.
 
 *** GET /v1/providers
 Return the list of provider identifiers advertised by the currently registered sink.
@@ -72,6 +80,7 @@ Return the list of provider identifiers advertised by the currently registered s
 #+END_SRC
 
 - =503 Service Unavailable=: no sink is connected. This mirrors =AppError::NoSink= and signals clients to fall back to default behaviour.
+
 *** GET /v1/health
 Lightweight liveness probe. Returns a JSON object with daemon status, current timestamp, and version string.
 
@@ -99,6 +108,24 @@ Immediately after connecting, the sink must send a `register` frame:
 - *providers*: provider identifiers that the sink understands (e.g., browser adapters). Empty list is acceptable for sinks that do not integrate with provider-specific flows.
 
 Upon successful registration the daemon responds with a `policy` frame describing limits. Clients can surface the advertised providers to users when constructing `target` directives.
+
+**** Policy frame
+The relay acknowledges registration with a =policy= message that communicates limits derived from configuration:
+
+#+BEGIN_SRC json
+{
+  "type": "policy",
+  "schema_version": "1.0",
+  "supersede_on_register": true,
+  "max_job_bytes": 131072
+}
+#+END_SRC
+
+- *supersede_on_register*: whether a new sink replaces the current connection.
+- *max_job_bytes*: upper bound enforced on incoming HTTP payloads.
+
+**** Heartbeats
+Once registered, the relay emits `ping` frames every =server.websocket_ping_interval= seconds. The sink must reply with `pong` within =server.websocket_pong_timeout=, otherwise missed pings are counted until =server.websocket_max_missed_pings= triggers disconnect and pending jobs are retried.
 
 **** Insert-text jobs
 Validated jobs are delivered as `insert_text` messages:
@@ -135,6 +162,19 @@ Run:
 #+BEGIN_SRC shell
 cargo run --bin promptivs -- --help
 #+END_SRC
+
+* Configuration
+The daemon loads configuration from =~/.config/promptivd/config.yaml= (or =promptivd.yaml= in the working directory), with environment overrides prefixed by =PROMPTIVD_=. Key server settings:
+- =server.bind_addr=: listen address (default =127.0.0.1:8787=).
+- =server.require_sink=: whether HTTP ingress requires an active sink before accepting jobs.
+- =server.supersede_on_register=: replace the current sink automatically when a new one registers.
+- =server.max_job_bytes=: maximum serialized request size (default 128 KiB).
+- =server.websocket_ping_interval=: interval between relay ping frames (seconds).
+- =server.websocket_pong_timeout=: grace period for pong responses (seconds).
+- =server.websocket_max_missed_pings=: consecutive missed pongs before disconnect.
+- =server.dispatch_timeout=: maximum time to wait for sink ACKs before timing out the HTTP request.
+
+Run =cargo run --bin promptivd -- --init-config= to scaffold the default configuration file with these values.
 
 * License
 Distributed under the MIT License. See LICENSE for more information.
