@@ -5,13 +5,14 @@
 
 * Overview
 
-A high-performance Rust daemon that relays insert-text jobs from local clients to a browser extension via WebSocket, enabling seamless text injection into LLM web interfaces (ChatGPT, Claude, Gemini).
+A high-performance Rust daemon that relays /insert/ text jobs from local clients to a browser extension via WebSocket, enabling seamless text injection into LLM web interfaces (ChatGPT, Claude, Gemini).
 
 ** Features
-- Built with Tokio async runtime and axum web framework.
-- Immediate dispatch with sink ACK propagation and graceful error handling.
+- Built atop Tokio and axum with structured tracing and graceful shutdown.
+- Immediate dispatch with sink ACK propagation and comprehensive error handling.
 - Clean modular architecture following SRP.
-- Structured logging, health checks, metrics, and WebSocket heartbeat timeouts.
+- Structured logging, health checks, and WebSocket heartbeat supervision.
+- Provider introspection via =GET /v1/providers= so clients can tailor UX to the active sink.
 - Includes a sample CLI client (promptivc) and sink (promptivs) illustrating end-to-end relay and acknowledgment flow.
 
 * Architecture
@@ -120,7 +121,7 @@ Validated jobs are delivered as `insert_text` messages:
 The sink must process the payload, perform the insertion, and reply with an `ack` frame (`status` = `ok`, `retry`, or `failed`).
 
 * Sample CLI Client (promptivc)
-A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =/v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
+A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =POST /v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
 
 Run:
 #+BEGIN_SRC shell
@@ -128,7 +129,7 @@ cargo run --bin promptivc -- --help
 #+END_SRC
 
 * Sample Sink Client (promptivs)
-A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a browser extension or external service maintains a live connection on =/v1/sink/ws=, processes incoming /insert/ text requests, and returns ACKs. Provides a working example of sink behavior, including job handling and session lifecycle.
+A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a browser extension or external service maintains a live connection on =/v1/sink/ws=, processes incoming insert-text requests, and returns ACKs. Provides a working example of sink behavior, including job handling and session lifecycle.
 
 Run:
 #+BEGIN_SRC shell
