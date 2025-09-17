@@ -5,7 +5,7 @@
 
 * Overview
 
-A high-performance Rust daemon that relays /insert/ text jobs from local clients to a browser extension via WebSocket, enabling seamless text injection into LLM web interfaces (ChatGPT, Claude, Gemini).
+A high-performance Rust daemon that relays /insert/ text jobs from local clients to connected sinks over WebSocket. Sinks implement the actual insertion logic; one example of which is the [[https://github.com/midsbie/promptive][promptive browser extension]].
 
 ** Features
 - Built atop Tokio and axum with structured tracing and graceful shutdown.
@@ -87,7 +87,7 @@ Lightweight liveness probe. Returns a JSON object with daemon status, current ti
 ** WebSocket
 
 *** GET /v1/sink/ws
-WebSocket endpoint for browser extension.
+WebSocket endpoint for sinks.
 
 Upgrades to a persistent WebSocket connection used by the sink. The server relays validated insert-text jobs to the connected sink and expects ACKs/heartbeats to maintain session health.
 
@@ -105,7 +105,7 @@ Immediately after connecting, the sink must send a =register= frame:
 #+END_SRC
 
 - *capabilities*: feature flags; today ="insert"= indicates support for insert-text jobs. Additional capabilities may be introduced later.
-- *providers*: provider identifiers that the sink understands (e.g., browser adapters). Empty list is acceptable for sinks that do not integrate with provider-specific flows.
+- *providers*: sink-specific provider identifiers. As an example, for a browser extension sink these would typically map to supported web interfaces; e.g. =chatgpt=, =claude=, or =gemini=. An empty list is valid for sinks that do not integrate with provider-specific flows.
 
 Upon successful registration the daemon responds with a =policy= frame describing limits. Clients can surface the advertised providers to users when constructing =target= directives.
 
@@ -156,7 +156,7 @@ cargo run --bin promptivc -- --help
 #+END_SRC
 
 * Sample Sink Client (promptivs)
-A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a browser extension or external service maintains a live connection on =/v1/sink/ws=, processes incoming insert-text requests, and returns ACKs. Provides a working example of sink behavior, including job handling and session lifecycle.
+A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a sink maintains a live connection on =/v1/sink/ws=, processes incoming insert-text requests, and returns ACKs.
 
 Run:
 #+BEGIN_SRC shell
