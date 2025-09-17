@@ -30,12 +30,12 @@ pub enum Placement {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TargetSpec {
     pub provider: Option<String>,
-    pub session_directive: Option<SessionDirective>,
+    pub session_policy: Option<SessionPolicy>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum SessionDirective {
+pub enum SessionPolicy {
     ReuseOrCreate,
     ReuseOnly,
     StartFresh,
@@ -132,7 +132,7 @@ mod tests {
         request.text = "abc".to_string();
         request.target = Some(TargetSpec {
             provider: Some("".to_string()),
-            session_directive: None,
+            session_policy: None,
         });
         assert!(matches!(
             request.validate(),

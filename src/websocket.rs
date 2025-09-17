@@ -428,7 +428,7 @@ impl ActiveSink {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{SessionDirective, SourceInfo, TargetSpec};
+    use crate::models::{SessionPolicy, SourceInfo, TargetSpec};
 
     #[test]
     fn test_sink_message_serialization() {
@@ -468,7 +468,7 @@ mod tests {
                 },
                 target: Some(TargetSpec {
                     provider: Some("chatgpt".to_string()),
-                    session_directive: Some(SessionDirective::ReuseOrCreate),
+                    session_policy: Some(SessionPolicy::ReuseOrCreate),
                 }),
                 metadata: serde_json::json!({"key": "value"}),
             },

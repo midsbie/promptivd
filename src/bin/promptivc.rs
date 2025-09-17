@@ -5,10 +5,10 @@ use clap::{Parser, ValueEnum};
 use reqwest::Client;
 use serde_json::json;
 
-use promptivd::models::{InsertTextRequest, Placement, SessionDirective, SourceInfo, TargetSpec};
+use promptivd::models::{InsertTextRequest, Placement, SessionPolicy, SourceInfo, TargetSpec};
 
 #[derive(Debug, Copy, Clone, ValueEnum)]
-enum SessionDirectiveArg {
+enum SessionPolicyArg {
     #[value(name = "reuse_or_create")]
     ReuseOrCreate,
     #[value(name = "reuse_only")]
@@ -17,12 +17,12 @@ enum SessionDirectiveArg {
     StartFresh,
 }
 
-impl From<SessionDirectiveArg> for SessionDirective {
-    fn from(value: SessionDirectiveArg) -> Self {
+impl From<SessionPolicyArg> for SessionPolicy {
+    fn from(value: SessionPolicyArg) -> Self {
         match value {
-            SessionDirectiveArg::ReuseOrCreate => SessionDirective::ReuseOrCreate,
-            SessionDirectiveArg::ReuseOnly => SessionDirective::ReuseOnly,
-            SessionDirectiveArg::StartFresh => SessionDirective::StartFresh,
+            SessionPolicyArg::ReuseOrCreate => SessionPolicy::ReuseOrCreate,
+            SessionPolicyArg::ReuseOnly => SessionPolicy::ReuseOnly,
+            SessionPolicyArg::StartFresh => SessionPolicy::StartFresh,
         }
     }
 }
@@ -76,9 +76,9 @@ struct Cli {
     #[arg(long = "provider", value_name = "PROVIDER")]
     target_provider: Option<String>,
 
-    /// Session directive
-    #[arg(long = "session-directive", value_enum, value_name = "DIRECTIVE")]
-    session_directive: Option<SessionDirectiveArg>,
+    /// Session policy
+    #[arg(long = "session-policy", value_enum, value_name = "POLICY")]
+    session_policy: Option<SessionPolicyArg>,
 
     /// Placement preference
     #[arg(long = "placement", value_enum, value_name = "PLACEMENT")]
@@ -111,10 +111,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Build optional target specification if provider metadata is supplied
-    let target = if cli.target_provider.is_some() || cli.session_directive.is_some() {
+    let target = if cli.target_provider.is_some() || cli.session_policy.is_some() {
         Some(TargetSpec {
             provider: cli.target_provider.clone(),
-            session_directive: cli.session_directive.map(Into::into),
+            session_policy: cli.session_policy.map(Into::into),
         })
     } else {
         None

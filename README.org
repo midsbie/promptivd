@@ -47,7 +47,7 @@ Body is a JSON object matching the structures below.
   } | null,
   "target": {
     "provider": "string | null",
-    "session_directive": "reuse_or_create" | "reuse_only" | "start_fresh" | null
+    "session_policy": "reuse_or_create" | "reuse_only" | "start_fresh" | null
   } | null,
   "metadata": {
     "...": "..."
@@ -56,7 +56,7 @@ Body is a JSON object matching the structures below.
 #+END_SRC
 
 - *placement*: optional hint for where the snippet should be inserted if the sink supports multiple insertion modes.
-- *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session* guides how the sink should reuse or create sessions (`REUSE_OR_CREATE` by default, `REUSE_ONLY` to fail if reuse is impossible, `START_FRESH` to force a new session).
+- *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session_policy* guides how the sink should reuse or create sessions (`REUSE_OR_CREATE` by default, `REUSE_ONLY` to fail if reuse is impossible, `START_FRESH` to force a new session).
 - *metadata*: arbitrary JSON provided by the client (e.g., timestamps, originating editor context).
 
 *** GET /v1/health
@@ -99,7 +99,7 @@ Validated jobs are delivered as `insert_text` messages:
     "text": "snippet",
     "placement": {"type": "cursor"} | null,
     "source": {"client": "cli", "label": "CLI", "path": "/tmp/file"},
-    "target": {"provider": "chatgpt", "session_directive": "start_fresh"} | null,
+    "target": {"provider": "chatgpt", "session_policy": "start_fresh"} | null,
     "metadata": {"timestamp": "...", "extra": "..."}
   }
 }
