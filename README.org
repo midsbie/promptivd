@@ -43,11 +43,11 @@ Body is a JSON object matching the structures below.
   },
   "text": "string (non-empty after trim)",
   "placement": {
-    "type": "TOP" | "BOTTOM" | "CURSOR"
+    "type": "top" | "bottom" | "cursor"
   } | null,
   "target": {
     "provider": "string | null",
-    "session": "REUSE_OR_CREATE" | "REUSE_ONLY" | "START_FRESH" | null
+    "session_directive": "reuse_or_create" | "reuse_only" | "start_fresh" | null
   } | null,
   "metadata": {
     "...": "..."
