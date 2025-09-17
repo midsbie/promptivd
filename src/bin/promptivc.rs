@@ -1,11 +1,51 @@
 use std::io::{self, Read};
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use reqwest::Client;
 use serde_json::json;
 
-use promptivd::models::{InsertTextRequest, SourceInfo};
+use promptivd::models::{InsertTextRequest, Placement, SessionDirective, SourceInfo, TargetSpec};
+
+#[derive(Debug, Copy, Clone, ValueEnum)]
+enum SessionDirectiveArg {
+    #[value(name = "reuse_or_create")]
+    ReuseOrCreate,
+    #[value(name = "reuse_only")]
+    ReuseOnly,
+    #[value(name = "start_fresh")]
+    StartFresh,
+}
+
+impl From<SessionDirectiveArg> for SessionDirective {
+    fn from(value: SessionDirectiveArg) -> Self {
+        match value {
+            SessionDirectiveArg::ReuseOrCreate => SessionDirective::ReuseOrCreate,
+            SessionDirectiveArg::ReuseOnly => SessionDirective::ReuseOnly,
+            SessionDirectiveArg::StartFresh => SessionDirective::StartFresh,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, ValueEnum)]
+enum PlacementArg {
+    #[value(name = "top")]
+    Top,
+    #[value(name = "bottom")]
+    Bottom,
+    #[value(name = "cursor")]
+    Cursor,
+}
+
+impl From<PlacementArg> for Placement {
+    fn from(value: PlacementArg) -> Self {
+        match value {
+            PlacementArg::Top => Placement::Top,
+            PlacementArg::Bottom => Placement::Bottom,
+            PlacementArg::Cursor => Placement::Cursor,
+        }
+    }
+}
 
 #[derive(Parser)]
 #[command(name = "promptivc")]
@@ -31,6 +71,18 @@ struct Cli {
     /// Text content (if not reading from stdin)
     #[arg(value_name = "TEXT")]
     content: Option<String>,
+
+    /// Target provider
+    #[arg(long = "provider", value_name = "PROVIDER")]
+    target_provider: Option<String>,
+
+    /// Session directive
+    #[arg(long = "session-directive", value_enum, value_name = "DIRECTIVE")]
+    session_directive: Option<SessionDirectiveArg>,
+
+    /// Placement preference
+    #[arg(long = "placement", value_enum, value_name = "PLACEMENT")]
+    placement: Option<PlacementArg>,
 
     /// Show verbose output
     #[arg(short, long)]
@@ -58,6 +110,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
+    // Build optional target specification if provider metadata is supplied
+    let target = if cli.target_provider.is_some() || cli.session_directive.is_some() {
+        Some(TargetSpec {
+            provider: cli.target_provider.clone(),
+            session_directive: cli.session_directive.map(Into::into),
+        })
+    } else {
+        None
+    };
+
     // Create the request
     let request = InsertTextRequest {
         schema_version: "1.0".to_string(),
@@ -67,8 +129,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             path: cli.path.as_ref().map(|p| p.to_string_lossy().to_string()),
         },
         text: add_snippet_template(&content, cli.path.as_ref()),
-        placement: None,
-        target: None,
+        placement: cli.placement.map(Into::into),
+        target,
         metadata: json!({
             "cli_version": env!("CARGO_PKG_VERSION"),
             "timestamp": chrono::Utc::now().to_rfc3339()
