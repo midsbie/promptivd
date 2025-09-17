@@ -171,5 +171,14 @@ The daemon loads configuration from =~/.config/promptivd/config.yaml= (or =promp
 
 Run =cargo run --bin promptivd -- --init-config= to scaffold the default configuration file with these values.
 
+* Ecosystem
+promptivd is the local relay (daemon). It accepts insert jobs over HTTP and forwards them to a connected sink over WebSocket.
+
+| Role   | Project    | What it does                                 |
+|--------+------------+----------------------------------------------|
+| Daemon | [[https://github.com/midsbie/promptivd][promptivd]]  | Relays insert jobs to a live sink            |
+| Sink   | [[https://github.com/midsbie/promptive][promptive]]  | Firefox extension acting as a WebSocket sink |
+| Client | [[https://github.com/midsbie/promptivel][promptivel]] | Emacs client that submits text to promptivd  |
+
 * License
 Distributed under the MIT License. See LICENSE for more information.
