@@ -142,20 +142,20 @@ Validated jobs are delivered as =insert_text= messages:
 
 The sink must process the payload, perform the insertion, and reply with an =ack= frame (=status= = =ok=, =retry=, or =failed=).
 
-* Sample CLI Client (promptivc)
-A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =POST /v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
-
-Run:
-#+BEGIN_SRC shell
-cargo run --bin promptivc -- --help
-#+END_SRC
-
 * Sample Sink Client (promptivs)
 A minimal WebSocket sink used to receive jobs from the daemon. It illustrates how a sink maintains a live connection on =/v1/sink/ws=, processes incoming insert-text requests, and returns ACKs.
 
 Run:
 #+BEGIN_SRC shell
 cargo run --bin promptivs -- --help
+#+END_SRC
+
+* Sample CLI Client (promptivc)
+A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =POST /v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
+
+Run:
+#+BEGIN_SRC shell
+cargo run --bin promptivc -- --help
 #+END_SRC
 
 * Configuration
