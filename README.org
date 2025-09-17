@@ -59,6 +59,18 @@ Body is a JSON object matching the structures below.
 - *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session_policy* guides how the sink should reuse or create sessions (`REUSE_OR_CREATE` by default, `REUSE_ONLY` to fail if reuse is impossible, `START_FRESH` to force a new session).
 - *metadata*: arbitrary JSON provided by the client (e.g., timestamps, originating editor context).
 
+
+*** GET /v1/providers
+Return the list of provider identifiers advertised by the currently registered sink.
+
+**** Responses
+- =200 OK= with body:
+
+#+BEGIN_SRC json
+{"providers": ["chatgpt", "claude"]}
+#+END_SRC
+
+- =503 Service Unavailable=: no sink is connected. This mirrors =AppError::NoSink= and signals clients to fall back to default behaviour.
 *** GET /v1/health
 Lightweight liveness probe. Returns a JSON object with daemon status, current timestamp, and version string.
 
