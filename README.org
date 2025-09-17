@@ -24,7 +24,7 @@ A high-performance Rust daemon that relays /insert/ text jobs from local clients
 
 ** HTTP API
 
-*** /v1/insert
+*** POST /v1/insert
 Submit an insert-text job.
 
 Accepts a JSON payload describing the text snippet, origin metadata, optional placement hints, and an optional target specification. Validates input and relays to an active sink. Returns the sink’s ACK on success, or an error if validation fails or no sink is available.
