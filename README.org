@@ -15,11 +15,6 @@ A high-performance Rust daemon that relays /insert/ text jobs from local clients
 - Provider introspection via =GET /v1/providers= so clients can tailor UX to the active sink.
 - Includes a sample CLI client (promptivc) and sink (promptivs) illustrating end-to-end relay and acknowledgment flow.
 
-* Architecture
-#+BEGIN_SRC
-[Client] -- HTTP --> [Relay Handler] == WS ==> [Extension Sink] --> [Provider Adapter] --> Sink action
-#+END_SRC
-
 * API Endpoints
 
 ** HTTP API
