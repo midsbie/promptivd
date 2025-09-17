@@ -57,8 +57,8 @@ Body is a JSON object matching the structures below.
 #+END_SRC
 
 - *placement*: optional hint for where the snippet should be inserted if the sink supports multiple insertion modes.
-- *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session_policy* guides how the sink should reuse or create sessions (`REUSE_OR_CREATE` by default, `REUSE_ONLY` to fail if reuse is impossible, `START_FRESH` to force a new session).
-- *metadata*: arbitrary JSON provided by the client (e.g., timestamps, originating editor context).
+- *target*: optional structured directive. A non-empty *provider* string aligns with a provider ID advertised by the sink. *session_policy* guides how the sink should reuse or create sessions (=REUSE_OR_CREATE= by default, =REUSE_ONLY= to fail if reuse is impossible, =START_FRESH= to force a new session).
+- *metadata*: optional arbitrary JSON provided by the client (e.g., timestamps, originating editor context).
 
 **** Responses
 - =200 OK=: job delivered. Response body contains ={"job_id":"...","status":"ok"}=.
@@ -92,7 +92,7 @@ WebSocket endpoint for browser extension.
 Upgrades to a persistent WebSocket connection used by the sink. The server relays validated insert-text jobs to the connected sink and expects ACKs/heartbeats to maintain session health.
 
 **** Registration handshake
-Immediately after connecting, the sink must send a `register` frame:
+Immediately after connecting, the sink must send a =register= frame:
 
 #+BEGIN_SRC json
 {
@@ -104,10 +104,10 @@ Immediately after connecting, the sink must send a `register` frame:
 }
 #+END_SRC
 
-- *capabilities*: feature flags; today `"insert"` indicates support for insert-text jobs. Additional capabilities may be introduced later.
+- *capabilities*: feature flags; today ="insert"= indicates support for insert-text jobs. Additional capabilities may be introduced later.
 - *providers*: provider identifiers that the sink understands (e.g., browser adapters). Empty list is acceptable for sinks that do not integrate with provider-specific flows.
 
-Upon successful registration the daemon responds with a `policy` frame describing limits. Clients can surface the advertised providers to users when constructing `target` directives.
+Upon successful registration the daemon responds with a =policy= frame describing limits. Clients can surface the advertised providers to users when constructing =target= directives.
 
 **** Policy frame
 The relay acknowledges registration with a =policy= message that communicates limits derived from configuration:
@@ -125,10 +125,10 @@ The relay acknowledges registration with a =policy= message that communicates li
 - *max_job_bytes*: upper bound enforced on incoming HTTP payloads.
 
 **** Heartbeats
-Once registered, the relay emits `ping` frames every =server.websocket_ping_interval= seconds. The sink must reply with `pong` within =server.websocket_pong_timeout=, otherwise missed pings are counted until =server.websocket_max_missed_pings= triggers disconnect and pending jobs are retried.
+Once registered, the relay emits =ping= frames every =server.websocket_ping_interval= seconds. The sink must reply with =pong= within =server.websocket_pong_timeout=, otherwise missed pings are counted until =server.websocket_max_missed_pings= triggers disconnect and pending jobs are retried.
 
 **** Insert-text jobs
-Validated jobs are delivered as `insert_text` messages:
+Validated jobs are delivered as =insert_text= messages:
 
 #+BEGIN_SRC json
 {
@@ -145,7 +145,7 @@ Validated jobs are delivered as `insert_text` messages:
 }
 #+END_SRC
 
-The sink must process the payload, perform the insertion, and reply with an `ack` frame (`status` = `ok`, `retry`, or `failed`).
+The sink must process the payload, perform the insertion, and reply with an =ack= frame (=status= = =ok=, =retry=, or =failed=).
 
 * Sample CLI Client (promptivc)
 A minimal HTTP client used to submit /insert/ text jobs to the daemon. It demonstrates how a local tool can package a snippet, attach source metadata, and dispatch it through =POST /v1/insert=. Serves as a reference for integrating editors, scripts, or other automation with the relay.
