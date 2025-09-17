@@ -115,6 +115,28 @@ impl SinkManager {
         self.connected.load(Ordering::Relaxed)
     }
 
+    pub async fn active_providers(&self) -> Option<Vec<String>> {
+        let sink_guard = self.active_sink.read().await;
+        sink_guard
+            .as_ref()
+            .map(|sink| sink.connection.providers.clone())
+    }
+
+    #[cfg(test)]
+    pub async fn set_test_sink(&self, connection: crate::models::SinkConnection) {
+        let (message_sender, receiver) = mpsc::unbounded_channel();
+        std::mem::forget(receiver);
+
+        let mut active = self.active_sink.write().await;
+        *active = Some(ActiveSink {
+            connection,
+            message_sender,
+            ack_waiters: Arc::new(RwLock::new(HashMap::new())),
+        });
+
+        self.connected.store(true, Ordering::Relaxed);
+    }
+
     pub async fn dispatch_job(
         &self,
         job_id: String,

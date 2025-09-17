@@ -118,6 +118,7 @@ fn create_router(state: AppState, config: &AppConfig) -> Router {
     Router::new()
         // API routes
         .route("/v1/health", get(promptivd::handlers::health))
+        .route("/v1/providers", get(promptivd::handlers::list_providers))
         .route("/v1/insert", post(promptivd::handlers::insert_job))
         // WebSocket route for sink connections
         .route("/v1/sink/ws", get(promptivd::handlers::websocket_handler))
@@ -262,6 +263,25 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_providers_endpoint_no_sink() {
+        let config = create_test_config();
+        let state = create_test_state();
+        let app = create_router(state, &config);
+
+        let response = app
+            .oneshot(
+                axum::http::Request::builder()
+                    .uri("/v1/providers")
+                    .body(axum::body::Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
     }
 
     #[test]

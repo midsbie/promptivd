@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::config::ServerConfig;
 use crate::error::AppError;
-use crate::models::{HealthResponse, InsertTextRequest};
+use crate::models::{HealthResponse, InsertTextRequest, ProvidersResponse};
 use crate::websocket::{AckResponse, AckStatus, SinkManager};
 
 #[derive(Clone)]
@@ -26,6 +26,15 @@ pub async fn health() -> Json<HealthResponse> {
         timestamp: Utc::now(),
         version: env!("CARGO_PKG_VERSION").to_string(),
     })
+}
+
+pub async fn list_providers(
+    State(state): State<AppState>,
+) -> Result<Json<ProvidersResponse>, AppError> {
+    match state.sink_manager.active_providers().await {
+        Some(providers) => Ok(Json(ProvidersResponse { providers })),
+        None => Err(AppError::NoSink),
+    }
 }
 
 pub async fn insert_job(
@@ -126,7 +135,7 @@ impl IntoResponse for AppError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::SourceInfo;
+    use crate::models::{SinkConnection, SourceInfo};
 
     fn create_test_state() -> AppState {
         let config = ServerConfig::default();
@@ -179,5 +188,30 @@ mod tests {
         let result = insert_job(State(state), Json(request)).await;
 
         assert!(matches!(result, Err(AppError::PayloadTooLarge { .. })));
+    }
+
+    #[tokio::test]
+    async fn test_list_providers_no_sink() {
+        let state = create_test_state();
+
+        let result = list_providers(State(state)).await;
+
+        assert!(matches!(result, Err(AppError::NoSink)));
+    }
+
+    #[tokio::test]
+    async fn test_list_providers_with_sink() {
+        let state = create_test_state();
+        let providers = vec!["chatgpt".to_string(), "claude".to_string()];
+        let connection = SinkConnection::new(vec![], providers.clone(), "1.2.3".to_string());
+
+        state
+            .sink_manager
+            .set_test_sink(connection)
+            .await;
+
+        let response = list_providers(State(state)).await.unwrap();
+
+        assert_eq!(response.0.providers, providers);
     }
 }

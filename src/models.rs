@@ -105,6 +105,11 @@ pub struct HealthResponse {
     pub version: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProvidersResponse {
+    pub providers: Vec<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
